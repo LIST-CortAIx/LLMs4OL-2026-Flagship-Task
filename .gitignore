@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+dist/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+outputs/
+scripts/logs/
+debug/
+data/splits/
+scripts/sync.sh
+scripts/sync.conf
+scripts/endpoints.json
+scripts/endpoints.example.json
+scripts/test_endpoints.py
+decisions/
+*.md
+!README.md
+
+# Generated data (rebuilt by prepare_data.py from the original train/test json)
+data/corpus.jsonl
+data/gold/
+data/gold_corrected/

@@ -1,0 +1,4 @@
+# Regenerable - rebuilt by train_term_classifier.py / train_s5_relation_classifier.py.
+# Dir kept in git, contents ignored.
+*
+!.gitignore

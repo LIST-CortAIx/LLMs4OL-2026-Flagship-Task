@@ -1,0 +1,19 @@
+# Runtime
+numpy>=1.26
+sentence-transformers>=3.0
+transformers>=4.40
+networkx>=3.0
+
+# Official organizer evaluation (ontology_learning/official_eval: graph_similarity, taxonomy)
+rapidfuzz>=3.0          # fuzzy triple/edge alignment
+scipy>=1.11             # linear_sum_assignment (Hungarian) for fuzzy/semantic matching
+scikit-learn>=1.3       # cosine_similarity in taxonomy.py
+tqdm>=4.66              # progress bar in taxonomy semantic_match
+einops>=0.7            # required by the nomic-embed-text-v1.5 remote code (semantic mode)
+
+# Scripts (analysis + charts)
+matplotlib>=3.8
+
+# Dev
+ruff>=0.9
+mypy>=1.10

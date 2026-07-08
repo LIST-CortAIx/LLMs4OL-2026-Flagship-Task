@@ -1,0 +1,8 @@
+# S5 QLoRA fine-tuning deps — install in a SEPARATE GPU env (not the inference env).
+# Install torch matching your CUDA first (https://pytorch.org), then:
+transformers>=4.46
+trl>=0.13
+peft>=0.13
+accelerate>=1.0
+bitsandbytes>=0.44
+datasets>=3.0
