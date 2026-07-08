@@ -13,6 +13,10 @@
 # Start a vLLM server (OpenAI-compatible API) via Apptainer.
 # The server stays alive until the job time limit or manual cancellation.
 #
+# Build the image once from the official public vLLM image (not shipped):
+#   apptainer build vllm-openai.sif docker://vllm/vllm-openai:latest
+# Override its path with $VLLM_SIF if it lives elsewhere.
+#
 # Submit:
 #   sbatch scripts/serve_vllm.slurm
 #

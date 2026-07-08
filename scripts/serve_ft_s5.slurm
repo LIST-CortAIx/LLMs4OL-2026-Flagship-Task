@@ -29,7 +29,8 @@
 #   FT_BASE      base model           default Qwen3-14B
 #   FT_ADAPTER   LoRA adapter dir     default models/s5_qlora_whole
 #   FT_LORA_RANK max LoRA rank        default 16 (set 32 for an r32 adapter)
-#   VLLM_SIF     apptainer image      default the project's vllm-openai.sif
+#   VLLM_SIF     apptainer image      default vllm-openai.sif
+#                (build once: apptainer build vllm-openai.sif docker://vllm/vllm-openai:latest)
 #   VLLM_PORT    server port          default 30001 (keep != the main model's 30000)
 #   VLLM_MAXLEN  max model len        default 16384 (RAG few-shot prompts are long)
 

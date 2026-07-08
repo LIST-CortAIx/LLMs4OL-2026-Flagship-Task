@@ -45,8 +45,18 @@ pip install -r requirements.txt
 ## Serving the model
 
 Every LLM step (S1–S5, and the full pipeline) talks to a vLLM server over HTTP, so start it
-**first**. It runs on a GPU node via Apptainer; the client steps themselves need no GPU.
+**first**. Any OpenAI-compatible vLLM endpoint works; the client steps themselves need no GPU.
 (S0 and data preparation are CPU-only and do not need the server.)
+
+The provided SLURM script runs vLLM through an Apptainer container. Build the image once from
+the official public vLLM image (no image is shipped in this repo):
+
+```bash
+apptainer build vllm-openai.sif docker://vllm/vllm-openai:latest
+# the scripts look for ./vllm-openai.sif, or set $VLLM_SIF to another path
+```
+
+Then launch the server:
 
 ```bash
 sbatch scripts/serve_vllm.slurm
@@ -54,7 +64,15 @@ tail -f scripts/logs/llms4ol_serve_<jobid>.out
 # Look for: Base URL : http://nodeXX:30000/v1
 ```
 
-Put that URL in `config.yaml` (`base_url`), or pass it per-run via `--base-url` / `$LLM_BASE_URL`.
+No Apptainer / SLURM? Run vLLM directly (`pip install vllm`) with the same flags:
+
+```bash
+vllm serve Qwen/Qwen3.5-27B --served-model-name Qwen/Qwen3.5-27B \
+  --host 0.0.0.0 --port 30000 --max-model-len 262144 \
+  --reasoning-parser qwen3 --enable-prefix-caching --dtype bfloat16 --trust-remote-code
+```
+
+Put the resulting URL in `config.yaml` (`base_url`), or pass it per-run via `--base-url` / `$LLM_BASE_URL`.
 
 ---
 
