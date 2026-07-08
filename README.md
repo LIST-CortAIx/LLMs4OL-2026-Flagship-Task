@@ -470,7 +470,7 @@ with the documented CLI flags (e.g. `--k`, `--context`, `--no-thinking`).
 | `--thinking-budget` | from `config.yaml` | vLLM forces `</think>` after this many thinking tokens |
 | `--no-thinking` | off | Disable Qwen3.5 thinking mode (faster, lower quality) |
 | `--batch-size` | varies | Items per LLM call (S3: terms / S4: type pairs) |
-| `--k-examples` | from `config.yaml` (S1: 15, S2: 20) | Training docs retrieved per document for RAG few-shot |
+| `--k-examples` | from `config.yaml` (S1: 10, S2: 20) | Training docs retrieved per document for RAG few-shot |
 | `--retriever-mode` | from `config.yaml` (S1: `text`) | `text` (full doc), `terms`, or `types` (keyed) retrieval |
 | `--classifier` | from `config.yaml` | S1: term/type-only classifier pre-filter (`.pkl`) |
 | `--no-snap` | off | S3: disable snapping OOV predicted types to the nearest S2 type |
@@ -518,7 +518,7 @@ Serve the adapter with vLLM (it is exposed as model `s5-ft`) and point S5 at tha
 ```bash
 FT_ADAPTER=models/s5_qlora_whole sbatch scripts/serve_ft_s5.slurm
 # then run S5 against the FT endpoint (S5 stages only; S1-S4 stay on the main model):
-S5_BASE_URL=http://<ft-node>:30002/v1 S5_MODEL=s5-ft bash scripts/run_pipeline.slurm
+S5_BASE_URL=http://<ft-node>:30001/v1 S5_MODEL=s5-ft sbatch scripts/run_pipeline.slurm
 ```
 
 ---
