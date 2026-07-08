@@ -29,6 +29,13 @@ The pipeline runs in two separate components:
 - **vLLM server**: serves the LLM via Apptainer container on a GPU node, OpenAI-compatible HTTP API.
 - **Pipeline client**: makes HTTP calls to the server — no GPU, no CUDA, no torch required.
 
+### Prerequisites
+
+| Component | Needs |
+|---|---|
+| Pipeline client | Python 3.11–3.12 (conda recommended); the packages in `requirements.txt`. No GPU. |
+| LLM server | A GPU large enough for the chosen model, and **one of**: [Apptainer](https://apptainer.org/) (system-level runtime — not a pip package; e.g. `module load apptainer`) to run the provided SLURM script, **or** `pip install vllm` to run vLLM directly (see [Serving the model](#serving-the-model)). Slurm is optional. |
+
 ---
 
 ## Installation (pipeline client only)
