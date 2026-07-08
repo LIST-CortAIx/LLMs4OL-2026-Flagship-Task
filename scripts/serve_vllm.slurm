@@ -25,7 +25,8 @@
 
 set -euo pipefail
 
-MODEL="${VLLM_MODEL:-Qwen/Qwen3.5-27B}"
+MODEL="${VLLM_MODEL:-Qwen/Qwen3.5-27B}"          # HF repo id or a local model directory
+SERVED_NAME="${VLLM_SERVED_NAME:-$MODEL}"        # client-facing name; must match config.yaml's model
 PORT="${VLLM_PORT:-30000}"
 SIF="${VLLM_SIF:-vllm-openai.sif}"
 
@@ -49,6 +50,7 @@ echo "Job ID   : $SLURM_JOB_ID"
 echo "Node     : $SLURM_NODELIST"
 echo "GPU      : $(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null || echo 'N/A')"
 echo "Model    : $MODEL"
+echo "Served as: $SERVED_NAME"
 echo "Port     : $PORT"
 echo "SIF      : $SIF"
 echo "Start    : $(date)"
@@ -60,7 +62,7 @@ apptainer run --nv \
     --env "$ENVS" \
     "$SIF" \
     --model "$MODEL" \
-    --served-model-name "$MODEL" \
+    --served-model-name "$SERVED_NAME" \
     --host 0.0.0.0 \
     --port "$PORT" \
     --tensor-parallel-size 1 \

@@ -73,8 +73,16 @@ tail -f scripts/logs/llms4ol_serve_<jobid>.out
 
 The model defaults to `Qwen/Qwen3.5-27B` (override with `$VLLM_MODEL`). When it is a Hugging
 Face repo id, the first run **downloads the weights** from the Hub and caches them under
-`$HF_HOME` (default `./.hf_cache`); when it is a local directory, that directory is served
-offline instead.
+`$HF_HOME` (default `./.hf_cache`); when it is a **local directory** (already downloaded), that
+directory is bound into the container and served offline — no download:
+
+```bash
+# serve a locally-available model, still addressed by a clean name from the client
+VLLM_MODEL=/path/to/Qwen3.5-27B VLLM_SERVED_NAME=Qwen/Qwen3.5-27B sbatch scripts/serve_vllm.slurm
+```
+
+`$VLLM_SERVED_NAME` (default: the model value) is the client-facing name; keep `config.yaml`'s
+`model` equal to it so a local path doesn't leak into the client config.
 
 No Apptainer / SLURM? Run vLLM directly (`pip install vllm`) with the same flags:
 
