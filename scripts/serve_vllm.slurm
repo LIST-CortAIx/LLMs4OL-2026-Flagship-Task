@@ -29,6 +29,21 @@ MODEL="${VLLM_MODEL:-Qwen/Qwen3.5-27B}"
 PORT="${VLLM_PORT:-30000}"
 SIF="${VLLM_SIF:-vllm-openai.sif}"
 
+# A local model directory is bound into the container and served fully offline.
+# A Hugging Face repo id (e.g. Qwen/Qwen3.5-27B) is downloaded on first run and
+# cached under $HF_HOME (bound so it persists across jobs).
+BINDS=(--bind /tmp:/tmp)
+ENVS="HF_HUB_OFFLINE=0,TRANSFORMERS_OFFLINE=0"
+if [ -d "$MODEL" ]; then
+    BINDS+=(--bind "$MODEL:$MODEL")
+    ENVS="HF_HUB_OFFLINE=1,TRANSFORMERS_OFFLINE=1,HF_DATASETS_OFFLINE=1"
+else
+    HF_HOME="${HF_HOME:-$PWD/.hf_cache}"
+    mkdir -p "$HF_HOME"
+    BINDS+=(--bind "$HF_HOME:$HF_HOME")
+    ENVS="$ENVS,HF_HOME=$HF_HOME"
+fi
+
 echo "========================================"
 echo "Job ID   : $SLURM_JOB_ID"
 echo "Node     : $SLURM_NODELIST"
@@ -41,9 +56,8 @@ echo "Base URL : http://${SLURM_NODELIST}:${PORT}/v1"
 echo "========================================"
 
 apptainer run --nv \
-    --bind "$MODEL:$MODEL" \
-    --bind /tmp:/tmp \
-    --env "HF_HUB_OFFLINE=1,TRANSFORMERS_OFFLINE=1,HF_DATASETS_OFFLINE=1" \
+    "${BINDS[@]}" \
+    --env "$ENVS" \
     "$SIF" \
     --model "$MODEL" \
     --served-model-name "$MODEL" \

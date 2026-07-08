@@ -9,6 +9,7 @@ dist/
 outputs/
 scripts/logs/
 debug/
+.hf_cache/
 data/splits/
 scripts/sync.sh
 scripts/sync.conf

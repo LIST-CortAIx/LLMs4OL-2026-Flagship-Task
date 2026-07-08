@@ -57,11 +57,26 @@ echo "S5_BASE_URL: http://${SLURM_NODELIST:-$(hostname)}:${PORT}/v1   (model: s5
 echo "========================================"
 [[ -d "$ADAPTER" ]] || { echo "ERROR: adapter dir not found: $ADAPTER" >&2; exit 1; }
 
+# The adapter is always a local dir; the base is bound + served offline when it is a
+# local directory, or downloaded from Hugging Face (cached under $HF_HOME) when it is a
+# repo id such as Qwen/Qwen3-14B.
+BINDS=(--bind "$ADAPTER:$ADAPTER" --bind /tmp:/tmp)
+ENVS="HF_HUB_OFFLINE=0,TRANSFORMERS_OFFLINE=0"
+if [ -d "$BASE" ]; then
+    BINDS+=(--bind "$BASE:$BASE")
+    ENVS="HF_HUB_OFFLINE=1,TRANSFORMERS_OFFLINE=1,HF_DATASETS_OFFLINE=1"
+else
+    HF_HOME="${HF_HOME:-$PWD/.hf_cache}"
+    mkdir -p "$HF_HOME"
+    BINDS+=(--bind "$HF_HOME:$HF_HOME")
+    ENVS="$ENVS,HF_HOME=$HF_HOME"
+fi
+
 # Serve base + LoRA, bound to 0.0.0.0 so other nodes can connect. No reasoning-parser:
 # the FT model emits the relations JSON directly (trained with enable_thinking=False).
 apptainer run --nv \
-    --bind "$BASE:$BASE" --bind "$ADAPTER:$ADAPTER" --bind /tmp:/tmp \
-    --env "HF_HUB_OFFLINE=1,TRANSFORMERS_OFFLINE=1,HF_DATASETS_OFFLINE=1" \
+    "${BINDS[@]}" \
+    --env "$ENVS" \
     "$SIF" \
     --model "$BASE" --served-model-name base \
     --enable-lora --lora-modules "s5-ft=$ADAPTER" --max-lora-rank "$LORA_RANK" \

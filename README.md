@@ -64,6 +64,11 @@ tail -f scripts/logs/llms4ol_serve_<jobid>.out
 # Look for: Base URL : http://nodeXX:30000/v1
 ```
 
+The model defaults to `Qwen/Qwen3.5-27B` (override with `$VLLM_MODEL`). When it is a Hugging
+Face repo id, the first run **downloads the weights** from the Hub and caches them under
+`$HF_HOME` (default `./.hf_cache`); when it is a local directory, that directory is served
+offline instead.
+
 No Apptainer / SLURM? Run vLLM directly (`pip install vllm`) with the same flags:
 
 ```bash
@@ -71,6 +76,10 @@ vllm serve Qwen/Qwen3.5-27B --served-model-name Qwen/Qwen3.5-27B \
   --host 0.0.0.0 --port 30000 --max-model-len 262144 \
   --reasoning-parser qwen3 --enable-prefix-caching --dtype bfloat16 --trust-remote-code
 ```
+
+> **The `model` value in `config.yaml` must match the server's `--served-model-name`.** The
+> client addresses the model by that exact name; a mismatch returns a 404. The default on both
+> sides is `Qwen/Qwen3.5-27B`.
 
 Put the resulting URL in `config.yaml` (`base_url`), or pass it per-run via `--base-url` / `$LLM_BASE_URL`.
 
