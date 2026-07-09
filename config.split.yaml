@@ -1,0 +1,101 @@
+# ============================================================================
+# LLMs4OL 2026 Flagship Task - SPLIT (development) configuration
+# Same knobs as config.yaml, but paths point at the held-out dev split:
+# examples/index from the split-train docs, eval against the split-test gold.
+# Selected by running with SCOPE=split. Per-step CLI flags override any value.
+# ============================================================================
+
+# ---- LLM server / backend --------------------------------------------------
+base_url: http://localhost:30000/v1
+model: Qwen/Qwen3.5-27B
+api_key: EMPTY            # endpoint API key ($LLM_API_KEY overrides)
+# Backend profile - which payload fields are sent and how reasoning is requested:
+#   qwen    vLLM + Qwen3: sampling extras + thinking budget
+#   gpt-oss vLLM GPT-OSS: sampling extras + reasoning_effort (set below)
+#   vllm    generic vLLM: sampling extras, no model-specific reasoning
+#   openai  generic OpenAI-compatible endpoint: standard params only
+llm_profile: qwen
+verify_ssl: true         # false for self-signed https endpoints
+reasoning_effort:        # gpt-oss only: low | medium | high (empty = backend default)
+
+# ---- LLM sampling ----------------------------------------------------------
+temperature: 0.0          # deterministic decoding
+top_p: 0.95
+top_k: 20
+min_p: 0.0
+presence_penalty: 1.5
+repetition_penalty: 1.0
+max_tokens: 16384         # total budget; thinking_budget caps the reasoning part
+enable_thinking: true     # reasoning mode; S2 overrides to false (pass --no-thinking)
+thinking_budget: 4096     # max reasoning tokens before the model must answer
+
+# ---- Pipeline runtime ------------------------------------------------------
+workers: 20               # parallel LLM calls
+llm_timeout: 900          # HTTP timeout per LLM attempt (seconds)
+embedding_model: all-MiniLM-L6-v2
+
+# ---- Data & retriever indexes ----------------------------------------------
+# Build the index with: run_step.py s0 --training-data <corpus>.
+# Few-shot examples for S1/S2/S3 are retrieved from this index.
+training_data: data/splits/train.json
+index_dir: indexes/split_s0_retriever   # holds doc/term/type embeddings + the S3 pair index
+
+# ---- S1 - term extraction --------------------------------------------------
+k_examples_s1: 10                          # term-bearing few-shot examples per doc
+example_selection_s1: similarity_two_pools # similarity_all_docs | similarity_two_pools
+k_empty_s1: 10                             # type-only (term-free) examples, for two_pools
+cot_s1: false                              # add a chain-of-thought prompt
+retriever_mode_s1: text                    # text (full doc) | terms
+classifier_s1: models/term_classifier_split.pkl   # TF-IDF term-presence gate; empty = disabled
+index_dir_s1: indexes/split_s0_retriever              # per-step index override (default: index_dir)
+
+# ---- S2 - type extraction --------------------------------------------------
+# S2 runs with reasoning disabled: pass --no-thinking on the s2 command.
+k_examples_s2: 20
+s2_example_selection: similarity   # similarity | random | representative | representative_diverse
+                                   #  | type_similarity | doc_then_type_similarity | hybrid_similarity
+retriever_mode_s2: text            # text (full doc) | terms (type-keyed retrieval)
+cot_s2: true                       # chain-of-thought prompt
+# s2_example_seed:                 # seed for deterministic random selection
+# index_dir_s2:                    # per-step index override (default: index_dir)
+
+# ---- S3 - term typing ------------------------------------------------------
+k_s3: 10                # nearest gold (term, type) pairs used as few-shot
+batch_size_s3: 0        # 0 = one LLM call per document
+context_s3: full        # full | sentence | title_sentence | none
+snap_s3: true           # snap out-of-vocab predicted types to the nearest S2 type (needs --s2-input)
+augment_frequent_s3: 10 # frequent-type fallback pool size (0 = off)
+# Alternative typing modes (off by default; mutually exclusive with free generation):
+constrained_s3: false   # pick only from the retrieved candidate list
+lenient_s3: false       # candidates as suggestions, with a free-generation escape
+hybrid_s3: false        # hybrid retrieval (embedding + lexical term match)
+hybrid_alpha_s3: 0.5    # lexical weight when hybrid_s3 is on
+
+# ---- S5 - non-taxonomic relations ------------------------------------------
+domain_inference_s5: true   # one global LLM call infers a domain description
+prompt_v2_s5: true          # use the revised S5 prompt
+full_pool_s5: true          # draw few-shot from all training docs (incl. relation-free)
+k_examples_s5: 10           # few-shot: k nearest training docs (0 = off)
+s5_examples_gold: data/splits/train_gold/s5_gold.json   # S5 gold used to build few-shot (s2 sibling auto-derived)
+s5_examples_with_text: true # include each example doc's passage in the few-shot block
+retriever_mode_s5: text     # few-shot retrieval: text (doc text) | types
+neg_examples_s5: 0          # negative examples (0 with full_pool)
+snap_s5: false              # snap predicted types (no-op with the type-constraint prompt)
+# Relation-presence gate: TF-IDF classifier skips the LLM on docs predicted relation-free.
+relation_classifier_s5: models/s5_relation_classifier_split.pkl   # empty = disabled
+gate_threshold_s5: 0.65     # keep docs scored >= threshold (higher = filter more)
+# index_dir_s5:             # per-step index override (default: index_dir)
+
+# ---- S4 - taxonomy discovery -----------------------------------------------
+s4_embedding: false         # embedding-only parent selection instead of LLM verification
+k_s4: 1                     # nearest training parents per type (embedding mode)
+s4_threshold: 0.0           # min similarity for embedding-mode edges
+s4_token_overlap: 0.0       # min token overlap post-filter (0 = off)
+batch_size_s4: 10           # candidate pairs per LLM call
+n_clusters_s4: 10           # semantic clusters when clustering is enabled
+s4_depth_pass: false        # second pass to enrich subtypes per parent
+s4_mode: fewshot_grouped_pos_neg_child_batches   # LLM verification mode (see run_step.py for options)
+k_examples_s4: 3            # few-shot documents per call
+s4_max_positive_examples: 20   # positive subsumption examples per call
+s4_max_negative_examples: 20   # negative examples per call
+s4_example_seed: 13         # seed for example selection
